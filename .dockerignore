@@ -1,0 +1,11 @@
+/node_modules
+/nginx
+.env
+
+.git
+Dockerfile
+README.md
+.dockerignore
+docker-compose*
+
+.gitignore

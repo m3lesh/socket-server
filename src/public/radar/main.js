@@ -1,0 +1,130 @@
+$(document).ready(function () {
+  const host = location.origin;
+  const token = sessionStorage.getItem("user");
+
+  if (token == null) {
+    setTimeout(() => {
+      location.pathname = "/login/";
+    }, 3000);
+  }
+
+  const socket = io(host, {
+    query: { token },
+  });
+  socket.on("data", (data) => {
+    Draw(data);
+  });
+});
+
+function Draw(imgData) {
+  var playerX, playerY, teamNum, playerName, playerHealth;
+  var bombX, bombY, bombPlanted;
+
+  var img = document.getElementById("id_img");
+  var cnvs = document.getElementById("id_canvas");
+  var ctx = cnvs.getContext("2d");
+  if (imgData.local_player == true) {
+    document.getElementById("id_img").src = "static/" + imgData.map + ".png";
+
+    cnvs.style.position = "absolute";
+    cnvs.style.left = img.offsetLeft + "px";
+    cnvs.style.top = img.offsetTop + "px";
+
+    ctx.reset();
+    for (var i = 0; i < imgData.players.length; i++) {
+      if (!imgData.players[i].player_dead) {
+        playerX = imgData.players[i].player_x;
+        playerY = imgData.players[i].player_y;
+        teamNum = imgData.players[i].team_num;
+        playerName = imgData.players[i].player_name;
+        playerHealth = imgData.players[i].player_health;
+        playerTraceX = imgData.players[i].traceX;
+        playerTraceY = imgData.players[i].traceY;
+
+        if (teamNum == "2") {
+          //TT
+          ctx.beginPath();
+          ctx.moveTo(playerX, playerY);
+          ctx.lineTo(playerTraceX, playerTraceY);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "#ffffff";
+          ctx.stroke();
+          ctx.closePath();
+
+          ctx.beginPath();
+          ctx.arc(playerX, playerY, 4, 0, 2 * Math.PI);
+          ctx.lineWidth = 10;
+          ctx.strokeStyle = "#ff9900";
+          ctx.fillStyle = "#ff9900";
+          ctx.fill();
+          ctx.textAlign = "center";
+          ctx.fillText(playerName, parseInt(playerX), parseInt(playerY) - 14);
+          ctx.fillText(
+            "HP: " + playerHealth,
+            parseInt(playerX),
+            parseInt(playerY) + 20
+          );
+          ctx.stroke();
+          ctx.closePath();
+        }
+        if (teamNum == "3") {
+          //CT
+          ctx.beginPath();
+          ctx.moveTo(playerX, playerY);
+          ctx.lineTo(playerTraceX, playerTraceY);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = "#ffffff";
+          ctx.stroke();
+          ctx.closePath();
+
+          ctx.beginPath();
+          ctx.arc(playerX, playerY, 4, 0, 2 * Math.PI);
+          ctx.lineWidth = 10;
+          ctx.strokeStyle = "#00bfff";
+          ctx.fillStyle = "#00bfff";
+          ctx.fill();
+          ctx.textAlign = "center";
+          ctx.fillText(playerName, parseInt(playerX), parseInt(playerY) - 14);
+          ctx.fillText(
+            "HP: " + playerHealth,
+            parseInt(playerX),
+            parseInt(playerY) + 20
+          );
+          ctx.stroke();
+          ctx.closePath();
+        }
+      }
+    }
+
+    if (imgData.bomb.bomb_x != false) {
+      bombX = imgData.bomb.bomb_x;
+      bombY = imgData.bomb.bomb_y;
+      bombPlanted = imgData.bomb.planted;
+
+      if (bombPlanted == false) {
+        ctx.beginPath();
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = "#03fc0f";
+        ctx.stroke();
+        ctx.fillStyle = "#03fc0f";
+        ctx.fill();
+        ctx.fillRect(bombX, bombY, 10, 10);
+        ctx.closePath();
+        ctx.fillText("Bomb", bombX, bombY);
+      } else {
+        ctx.beginPath();
+        ctx.lineWidth = 10;
+        ctx.strokeStyle = "#b80000";
+        ctx.stroke();
+        ctx.fillStyle = "#b80000";
+        ctx.fill();
+        ctx.fillRect(bombX, bombY, 10, 10);
+        ctx.closePath();
+        ctx.fillText("Bomb", bombX, bombY);
+      }
+    }
+  } else {
+    ctx.reset();
+    document.getElementById("id_img").src = "static/default.png";
+  }
+}
