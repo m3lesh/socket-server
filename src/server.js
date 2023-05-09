@@ -38,9 +38,9 @@ app.use("/", webRoute);
 
 app.use(globalError);
 
-io.use(async(socket, next) => {
+io.use((socket, next) => {
   if (socket.handshake.query && socket.handshake.query.token) {
-   await jwt.verify(
+    jwt.verify(
       socket.handshake.query.token,
       process.env.JWT_SECRET_KEY,
       async (err, decoded) => {
@@ -62,7 +62,7 @@ io.on("connection", async (socket) => {
   // Connection now authenticated to receive further events
   const id = socket.decoded.userId;
   socket.join(id);
-  let count = await io._nsps.get("/").adapter.rooms.get(id).size;
+  let count = io._nsps.get("/").adapter.rooms.get(id).size;
 
   console.info(
     `Client connected id=${socket.id}\nto ${id}\ntotal Client in room ${count}`
@@ -73,7 +73,7 @@ io.on("connection", async (socket) => {
     if (!io._nsps.get("/").adapter.rooms.get(id)) {
       count = 0;
     } else {
-      count = await io._nsps.get("/").adapter.rooms.get(id).size;
+      count = io._nsps.get("/").adapter.rooms.get(id).size;
     }
     await User.findByIdAndUpdate(
       id,
@@ -89,20 +89,15 @@ io.on("connection", async (socket) => {
     );
   });
 
-  app.get(`/${id}/imgdata`, async (req, res) => {
+  app.get(`/${id}/imgdata`, (req, res) => {
     //const password = req.query.pass;
     //const id = req.query.id;
-    let count;
-    if (!io._nsps.get("/").adapter.rooms.get(id)) {
-      count = 0;
-    } else {
-      count = await io._nsps.get("/").adapter.rooms.get(id).size;
-    }
+
     const decodedData = base64.decode(req.query.data);
     let MyData = utf8.decode(decodedData);
     MyData = JSON.parse(MyData);
 
-    io.to(id).emit("data", MyData, count);
+    io.to(id).emit("data", MyData);
     res.send();
   });
   await User.findByIdAndUpdate(

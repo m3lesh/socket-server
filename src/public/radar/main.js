@@ -7,14 +7,11 @@ $(document).ready(function () {
       location.pathname = "/login/";
     }, 500);
   }
-  document.getElementById("cont").style.color = "red";
-  document.getElementById("cont").innerHTML = 0;
+
   const socket = io(host, {
     query: { token },
   });
-  socket.on("data", (data, count) => {
-    console.log(count);
-    document.getElementById("cont").innerHTML = count;
+  socket.on("data", (data) => {
     Draw(data);
   });
 });
