@@ -38,9 +38,9 @@ app.use("/", webRoute);
 
 app.use(globalError);
 
-io.use((socket, next) => {
+io.use(async(socket, next) => {
   if (socket.handshake.query && socket.handshake.query.token) {
-    jwt.verify(
+   await jwt.verify(
       socket.handshake.query.token,
       process.env.JWT_SECRET_KEY,
       async (err, decoded) => {
@@ -62,7 +62,7 @@ io.on("connection", async (socket) => {
   // Connection now authenticated to receive further events
   const id = socket.decoded.userId;
   socket.join(id);
-  let count = io._nsps.get("/").adapter.rooms.get(id).size;
+  let count = await io._nsps.get("/").adapter.rooms.get(id).size;
 
   console.info(
     `Client connected id=${socket.id}\nto ${id}\ntotal Client in room ${count}`
@@ -73,7 +73,7 @@ io.on("connection", async (socket) => {
     if (!io._nsps.get("/").adapter.rooms.get(id)) {
       count = 0;
     } else {
-      count = io._nsps.get("/").adapter.rooms.get(id).size;
+      count = await io._nsps.get("/").adapter.rooms.get(id).size;
     }
     await User.findByIdAndUpdate(
       id,
@@ -96,7 +96,7 @@ io.on("connection", async (socket) => {
     if (!io._nsps.get("/").adapter.rooms.get(id)) {
       count = 0;
     } else {
-      count = io._nsps.get("/").adapter.rooms.get(id).size;
+      count = await io._nsps.get("/").adapter.rooms.get(id).size;
     }
     const decodedData = base64.decode(req.query.data);
     let MyData = utf8.decode(decodedData);
