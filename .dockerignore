@@ -10,3 +10,4 @@ docker-compose*
 
 .gitignore
 setup.txt
+main.lua

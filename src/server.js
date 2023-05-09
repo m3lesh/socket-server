@@ -38,15 +38,18 @@ app.use("/", webRoute);
 
 app.use(globalError);
 
-io.use(function (socket, next) {
+io.use((socket, next) => {
   if (socket.handshake.query && socket.handshake.query.token) {
     jwt.verify(
       socket.handshake.query.token,
       process.env.JWT_SECRET_KEY,
-      function (err, decoded) {
+      async (err, decoded) => {
         if (err) return next(new Error("Authentication error"));
         socket.decoded = decoded;
-
+        const user = await User.findById(socket.decoded.userId);
+        if (!user || !user.active) {
+          return;
+        }
         next();
       }
     );
@@ -58,45 +61,54 @@ io.use(function (socket, next) {
 io.on("connection", async (socket) => {
   // Connection now authenticated to receive further events
   const id = socket.decoded.userId;
-  console.info(`Client connected [id=${socket.id}]`);
+  socket.join(id);
+  let count = io._nsps.get("/").adapter.rooms.get(id).size;
+
+  console.info(
+    `Client connected id=${socket.id}\nto ${id}\ntotal Client in room ${count}`
+  );
+
   //On Disconnect
   socket.on("disconnect", async () => {
+    if (!io._nsps.get("/").adapter.rooms.get(id)) {
+      count = 0;
+    } else {
+      count = io._nsps.get("/").adapter.rooms.get(id).size;
+    }
     await User.findByIdAndUpdate(
       id,
       {
-        socketClientsCount: io.engine.clientsCount,
+        socketClientsCount: count,
       },
       {
         new: true,
       }
     );
-    console.info(`Client disconnect [id=${socket.id}]`);
+    console.info(
+      `Client disconnect id=${socket.id}\nto ${id}\ntotal Client in room ${count}`
+    );
   });
-
-  socket.join(id);
-
-  // const user = await User.findById(id);
-  // if (!user || !bcrypt.compare(password, user.password) || !user.active) {
-  //   return;
-  // }
 
   app.get(`/${id}/imgdata`, async (req, res) => {
     //const password = req.query.pass;
     //const id = req.query.id;
-
+    let count;
+    if (!io._nsps.get("/").adapter.rooms.get(id)) {
+      count = 0;
+    } else {
+      count = io._nsps.get("/").adapter.rooms.get(id).size;
+    }
     const decodedData = base64.decode(req.query.data);
     let MyData = utf8.decode(decodedData);
     MyData = JSON.parse(MyData);
 
-    io.to(id).emit("data", MyData);
-    if (io.engine.clientsCount != 0) {
-      res.send();
-    }
+    io.to(id).emit("data", MyData, count);
+    res.send();
   });
   await User.findByIdAndUpdate(
     id,
     {
-      socketClientsCount: io.engine.clientsCount,
+      socketClientsCount: count,
     },
     {
       new: true,

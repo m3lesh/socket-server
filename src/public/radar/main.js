@@ -5,13 +5,16 @@ $(document).ready(function () {
   if (token == null) {
     setTimeout(() => {
       location.pathname = "/login/";
-    }, 3000);
+    }, 500);
   }
-
+  document.getElementById("cont").style.color = "red";
+  document.getElementById("cont").innerHTML = 0;
   const socket = io(host, {
     query: { token },
   });
-  socket.on("data", (data) => {
+  socket.on("data", (data, count) => {
+    console.log(count);
+    document.getElementById("cont").innerHTML = count;
     Draw(data);
   });
 });
