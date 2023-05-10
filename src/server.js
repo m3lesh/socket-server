@@ -1,8 +1,7 @@
 require("dotenv").config();
 const path = require("path");
 
-const base64 = require("base-64");
-const utf8 = require("utf8");
+
 const jwt = require("jsonwebtoken");
 
 const express = require("express");
@@ -35,8 +34,6 @@ const io = new Server(httpServer);
 
 app.use("/api/auth", authRoute);
 app.use("/", webRoute);
-
-app.use(globalError);
 
 io.use((socket, next) => {
   if (socket.handshake.query && socket.handshake.query.token) {
@@ -92,12 +89,17 @@ io.on("connection", async (socket) => {
   app.get(`/${id}/imgdata`, (req, res) => {
     //const password = req.query.pass;
     //const id = req.query.id;
+    let count = 0;
+    if (!io._nsps.get("/").adapter.rooms.get(id)) {
+      count = 0;
+    } else {
+      count = io._nsps.get("/").adapter.rooms.get(id).size;
+    }
+    let MyData = Buffer.from(req.query.data, "base64").toString("utf-8");
 
-    const decodedData = base64.decode(req.query.data);
-    let MyData = utf8.decode(decodedData);
     MyData = JSON.parse(MyData);
 
-    io.to(id).emit("data", MyData);
+    io.to(id).emit("data", MyData, count);
     res.send();
   });
   await User.findByIdAndUpdate(
@@ -110,5 +112,7 @@ io.on("connection", async (socket) => {
     }
   );
 });
+
+app.use(globalError);
 
 httpServer.listen(process.env.PORT);

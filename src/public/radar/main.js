@@ -2,6 +2,8 @@ $(document).ready(function () {
   const host = location.origin;
   const token = sessionStorage.getItem("user");
 
+  document.getElementById("cont").style.color = "red";
+
   if (token == null) {
     setTimeout(() => {
       location.pathname = "/login/";
@@ -11,7 +13,8 @@ $(document).ready(function () {
   const socket = io(host, {
     query: { token },
   });
-  socket.on("data", (data) => {
+  socket.on("data", (data, count) => {
+    document.getElementById("cont").innerHTML = count;
     Draw(data);
   });
 });
