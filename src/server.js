@@ -1,7 +1,6 @@
 require("dotenv").config();
 const path = require("path");
 
-
 const jwt = require("jsonwebtoken");
 
 const express = require("express");
@@ -95,8 +94,8 @@ io.on("connection", async (socket) => {
     } else {
       count = io._nsps.get("/").adapter.rooms.get(id).size;
     }
-    let MyData = Buffer.from(req.query.data, "base64").toString("utf-8");
 
+    let MyData = Buffer.from(req.query.data, "base64").toString();
     MyData = JSON.parse(MyData);
 
     io.to(id).emit("data", MyData, count);
